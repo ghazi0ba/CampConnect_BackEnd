@@ -37,17 +37,24 @@ public class User {
     private String phone;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Order> orders;
+
+    /*
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Review> reviews;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Reservation> reservations;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Order> orders;
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
     private List<Message> sentMessages;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<GroupMatch> groupMatches;
+
+     */
+
+
+
+
 }
