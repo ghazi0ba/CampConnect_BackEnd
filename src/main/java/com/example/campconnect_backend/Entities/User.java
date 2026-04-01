@@ -5,10 +5,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,35 +19,20 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
+    @Column(nullable = false, unique = true)
+    private String username;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String role;
+    private String avatarUrl;
 
-    private String phone;
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Message> messages;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Review> reviews;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Reservation> reservations;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Order> orders;
-
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
-    private List<Message> sentMessages;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<GroupMatch> groupMatches;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<UserParticipant> participations;
 }
+
