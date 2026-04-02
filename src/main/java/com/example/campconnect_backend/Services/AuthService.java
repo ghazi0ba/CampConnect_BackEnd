@@ -3,6 +3,7 @@ package com.example.campconnect_backend.Services;
 
 
 import com.example.campconnect_backend.Dto.AuthDto;
+import com.example.campconnect_backend.Entities.Role;
 import com.example.campconnect_backend.Entities.User;
 import com.example.campconnect_backend.exception.BadRequestException;
 import com.example.campconnect_backend.Repositories.UserRepository;
