@@ -3,8 +3,9 @@ package com.example.campconnect_backend.Services;
 
 
 import com.example.campconnect_backend.Dto.UserDto;
-import com.example.campconnect_backend.Entities.User
-import com.example.campconnect_backend.BadRequestException;
+import com.example.campconnect_backend.Entities.Role;
+import com.example.campconnect_backend.Entities.User;
+import com.example.campconnect_backend.exception.BadRequestException;
 import com.example.campconnect_backend.exception.ResourceNotFoundException;
 import com.example.campconnect_backend.Repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@@Service
+@Service
 @RequiredArgsConstructor
 public class UserService {
 
@@ -94,7 +95,7 @@ public class UserService {
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
-        dto.setRole(user.getRole().name());
+        dto.setRole(user.getRole());
         return dto;
     }
 }
