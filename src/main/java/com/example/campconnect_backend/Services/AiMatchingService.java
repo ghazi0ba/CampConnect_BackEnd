@@ -199,4 +199,42 @@ public class AiMatchingService {
                 .matchLabel(label)
                 .build();
     }
+
+    // ── AI Chat Method ──────────────────────────────────────────────────────
+
+    public String chatWithAI(String userMessage) {
+        // Simple AI responses based on keywords
+        String message = userMessage.toLowerCase().trim();
+
+        if (message.contains("hello") || message.contains("hi") || message.contains("bonjour")) {
+            return "Hello! I'm your CampConnect AI assistant. I can help you find sports groups, answer questions about matching, or provide information about our platform. How can I assist you today?";
+        }
+
+        if (message.contains("match") || message.contains("group") || message.contains("find")) {
+            return "I'd be happy to help you find the perfect sports group! Based on your preferences, I can suggest groups that match your sport interests, skill level, location, and availability. Would you like me to run a matching algorithm for you?";
+        }
+
+        if (message.contains("sport") || message.contains("football") || message.contains("tennis") || message.contains("basketball")) {
+            return "We support various sports including football, tennis, basketball, and more! Each group has different skill levels and locations. Tell me your preferred sport and I'll help you find matching groups.";
+        }
+
+        if (message.contains("location") || message.contains("where") || message.contains("distance")) {
+            return "Location is important for finding nearby sports groups! You can set your preferred radius in your profile preferences. The matching algorithm considers distance to give you the best local options.";
+        }
+
+        if (message.contains("skill") || message.contains("level") || message.contains("beginner") || message.contains("advanced")) {
+            return "Skill level matching ensures you play with people at your level. We have beginner, intermediate, and advanced groups. The algorithm matches you with groups within 1 skill level difference for the best experience.";
+        }
+
+        if (message.contains("help") || message.contains("how") || message.contains("what")) {
+            return "CampConnect helps you find sports groups that match your preferences. You can set your sport interests, location, skill level, and availability. Then our AI matching algorithm finds the best groups for you. You can also chat with group members and join matches!";
+        }
+
+        if (message.contains("thank") || message.contains("thanks")) {
+            return "You're welcome! Happy to help you find your perfect sports match. Enjoy playing!";
+        }
+
+        // Default response
+        return "I'm here to help you with sports group matching and CampConnect features. You can ask me about finding groups, sports, locations, skill levels, or any other questions about the platform!";
+    }
 }

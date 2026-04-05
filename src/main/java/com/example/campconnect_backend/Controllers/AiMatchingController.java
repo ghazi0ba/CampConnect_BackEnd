@@ -38,4 +38,12 @@ public class AiMatchingController {
             @PathVariable Long userId) {
         return ResponseEntity.ok(matchingService.computeMatches(userId));
     }
+
+    // POST /api/matching/ai/chat  →  chat avec l'IA
+    @PostMapping("/ai/chat")
+    public ResponseEntity<AiChatDto.Response> chatWithAI(
+            @RequestBody AiChatDto.Request req) {
+        String response = matchingService.chatWithAI(req.getMessage());
+        return ResponseEntity.ok(new AiChatDto.Response(response));
+    }
 }

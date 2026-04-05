@@ -50,6 +50,20 @@ public class UserPreferenceService {
         return toResponse(pref);
     }
 
+    @Transactional
+    public UserPreferenceDto.Response updateLocation(Long userId, Double latitude, Double longitude) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        UserPreference pref = prefRepo.findByUserId(userId)
+                .orElse(UserPreference.builder().user(user).build());
+
+        pref.setLatitude(latitude);
+        pref.setLongitude(longitude);
+
+        return toResponse(prefRepo.save(pref));
+    }
+
     private UserPreferenceDto.Response toResponse(UserPreference p) {
         return UserPreferenceDto.Response.builder()
                 .id(p.getId())
