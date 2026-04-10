@@ -2,7 +2,9 @@ package com.example.campconnect_backend.Services;
 
 
 
+import com.example.campconnect_backend.Dto.GroupMatchDto;
 import com.example.campconnect_backend.Dto.MatchResultDto;
+import com.example.campconnect_backend.Dto.UserPreferenceDto;
 import com.example.campconnect_backend.Entities.*;
 import com.example.campconnect_backend.Repositories.*;
 import lombok.RequiredArgsConstructor;
@@ -18,17 +20,17 @@ import java.util.stream.Collectors;
 public class AiMatchingService {
 
     private final UserPreferenceRepository prefRepo;
-    private final GroupMatchRepository     groupRepo;
+    private final GroupMatchRepository groupRepo;
     private final UserParticipantRepository upRepo;
-    private final UserRepository           userRepo;
-    private final MatchResultRepository    matchRepo;
+    private final UserRepository userRepo;
+    private final MatchResultRepository matchRepo;
 
     // ── Poids des critères (total = 1.0) ────────────────────────────────────
-    private static final double W_SPORT        = 0.35;
-    private static final double W_LOCATION     = 0.30;
-    private static final double W_SKILL        = 0.15;
+    private static final double W_SPORT = 0.35;
+    private static final double W_LOCATION = 0.30;
+    private static final double W_SKILL = 0.15;
     private static final double W_AVAILABILITY = 0.10;
-    private static final double W_GROUP_SIZE   = 0.10;
+    private static final double W_GROUP_SIZE = 0.10;
 
     // ── Calculer les matches pour un user ───────────────────────────────────
 
@@ -60,17 +62,17 @@ public class AiMatchingService {
 
     private MatchResult buildMatchResult(User user, UserPreference pref, GroupMatch gm) {
 
-        double sportScore        = computeSportScore(pref, gm);
-        double locationScore     = computeLocationScore(pref, gm);
-        double skillScore        = computeSkillScore(pref, gm);
+        double sportScore = computeSportScore(pref, gm);
+        double locationScore = computeLocationScore(pref, gm);
+        double skillScore = computeSkillScore(pref, gm);
         double availabilityScore = computeAvailabilityScore(pref, gm);
-        double groupSizeScore    = computeGroupSizeScore(pref, gm);
+        double groupSizeScore = computeGroupSizeScore(pref, gm);
 
-        double total = (sportScore        * W_SPORT)
-                + (locationScore     * W_LOCATION)
-                + (skillScore        * W_SKILL)
+        double total = (sportScore * W_SPORT)
+                + (locationScore * W_LOCATION)
+                + (skillScore * W_SKILL)
                 + (availabilityScore * W_AVAILABILITY)
-                + (groupSizeScore    * W_GROUP_SIZE);
+                + (groupSizeScore * W_GROUP_SIZE);
 
         double distanceKm = computeDistance(pref, gm);
 
@@ -103,10 +105,10 @@ public class AiMatchingService {
     private double computeLocationScore(UserPreference pref, GroupMatch gm) {
         if (pref.getLatitude() == null || gm.getLatitude() == null) return 0.5;
         double dist = haversineKm(pref.getLatitude(), pref.getLongitude(),
-                gm.getLatitude(),  gm.getLongitude());
+                gm.getLatitude(), gm.getLongitude());
         double radius = pref.getRadiusKm() > 0 ? pref.getRadiusKm() : 50.0;
-        if (dist <= radius)       return 1.0 - (dist / radius) * 0.4; // 1.0 → 0.6
-        if (dist <= radius * 2)   return 0.3;
+        if (dist <= radius) return 1.0 - (dist / radius) * 0.4; // 1.0 → 0.6
+        if (dist <= radius * 2) return 0.3;
         return 0.0;
     }
 
@@ -133,8 +135,8 @@ public class AiMatchingService {
 
     private String getTimeSlot(int hour, int dayOfWeek) {
         if (dayOfWeek >= 6) return "weekend";
-        if (hour < 12)      return "morning";
-        if (hour < 18)      return "afternoon";
+        if (hour < 12) return "morning";
+        if (hour < 18) return "afternoon";
         return "evening";
     }
 
@@ -160,9 +162,9 @@ public class AiMatchingService {
         final double R = 6371.0;
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon/2) * Math.sin(dLon/2);
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
@@ -170,7 +172,9 @@ public class AiMatchingService {
         return upRepo.countAcceptedByGroupMatchId(gm.getId()) >= gm.getMaxParticipants();
     }
 
-    private double round(double v) { return Math.round(v * 10.0) / 10.0; }
+    private double round(double v) {
+        return Math.round(v * 10.0) / 10.0;
+    }
 
     // ── Mapper ───────────────────────────────────────────────────────────────
 
@@ -237,4 +241,222 @@ public class AiMatchingService {
         // Default response
         return "I'm here to help you with sports group matching and CampConnect features. You can ask me about finding groups, sports, locations, skill levels, or any other questions about the platform!";
     }
+    @Transactional(readOnly = true)
+    public List<GroupMatchDto.Response> findNearbyGroups(Long userId) {
+
+        UserPreference pref = prefRepo.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User preferences not found"));
+
+        if (pref.getLatitude() == null || pref.getLongitude() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "User location not defined");
+        }
+
+        double userLat = pref.getLatitude();
+        double userLng = pref.getLongitude();
+
+        double maxDistanceKm = (pref.getRadiusKm() > 0)
+                ? pref.getRadiusKm()
+                : 20.0;
+
+        List<GroupMatch> groups = groupRepo.findAll();
+
+        return groups.stream()
+
+                // 1. filtrer groupes valides
+                .filter(g -> g.getLatitude() != null && g.getLongitude() != null)
+
+                // 2. calcul distance
+                .map(g -> {
+                    double distance = haversineKm(
+                            userLat,
+                            userLng,
+                            g.getLatitude(),
+                            g.getLongitude()
+                    );
+                    return new AbstractMap.SimpleEntry<>(g, distance);
+                })
+
+                // 3. filtrer par distance
+                .filter(entry -> entry.getValue() <= maxDistanceKm)
+
+                // 4. TRI INTELLIGENT (AI simple)
+                .sorted((e1, e2) -> {
+                    double score1 = computeSmartScore(pref, e1.getKey(), e1.getValue());
+                    double score2 = computeSmartScore(pref, e2.getKey(), e2.getValue());
+                    return Double.compare(score2, score1); // DESC
+                })
+
+                // 5. LIMIT
+                .limit(20)
+
+                // 6. MAP DTO
+                .map(entry -> {
+                    GroupMatch g = entry.getKey();
+                    double distance = entry.getValue();
+
+                    return GroupMatchDto.Response.builder()
+                            .id(g.getId())
+                            .name(g.getName())
+                            .description(g.getDescription())
+                            .sport(g.getSport())
+                            .maxParticipants(g.getMaxParticipants())
+                            .scheduledAt(g.getScheduledAt())
+                            .location(g.getLocation())
+                            .createdAt(g.getCreatedAt())
+                            .participantCount(upRepo.countAcceptedByGroupMatchId(g.getId()))
+                            .build();
+                })
+
+                .collect(Collectors.toList());
+    }
+    private double computeSmartScore(UserPreference pref, GroupMatch group, double distance) {
+
+        double score = 0;
+
+        // 🔹 Distance (plus proche = meilleur)
+        score += (1 / (1 + distance)) * 50;
+
+        // 🔹 Sport match
+        if (pref.getSports() != null && group.getSport() != null) {
+            List<String> sports = Arrays.stream(pref.getSports().split(","))
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .toList();
+
+            if (sports.contains(group.getSport().toLowerCase())) {
+                score += 30;
+            }
+        }
+
+        // 🔹 Taille groupe
+        if (group.getMaxParticipants() >= pref.getGroupSizeMin()
+                && group.getMaxParticipants() <= pref.getGroupSizeMax()) {
+            score += 20;
+        }
+
+        return score;
+    }
+
+    private double computeUserCompatibility(UserPreference me, UserPreference other, double distance) {
+
+        double score = 0;
+
+        double radius = me.getRadiusKm() > 0 ? me.getRadiusKm() : 20;
+
+        // distance
+        if (distance <= radius) {
+            score += (1 - (distance / radius)) * 40;
+        } else return 0;
+
+        // sport match
+        if (me.getSports() != null && other.getSports() != null) {
+            List<String> mySports = Arrays.stream(me.getSports().split(","))
+                    .map(String::trim).map(String::toLowerCase).toList();
+
+            List<String> otherSports = Arrays.stream(other.getSports().split(","))
+                    .map(String::trim).map(String::toLowerCase).toList();
+
+            if (mySports.stream().anyMatch(otherSports::contains)) {
+                score += 30;
+            }
+        }
+
+        // skill
+        if (me.getSkillLevel() != null && other.getSkillLevel() != null) {
+            int diff = Math.abs(me.getSkillLevel().ordinal() - other.getSkillLevel().ordinal());
+
+            if (diff == 0) score += 20;
+            else if (diff == 1) score += 10;
+        }
+
+        // availability
+        if (me.getAvailability() != null && other.getAvailability() != null) {
+            if (other.getAvailability().toLowerCase().contains(me.getAvailability().toLowerCase())) {
+                score += 10;
+            }
+        }
+
+        return score;
+    }
+    @Transactional(readOnly = true)
+    public List<UserPreferenceDto.Response> findMatchingUsers(Long userId) {
+
+        UserPreference me = prefRepo.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Preferences not found"));
+
+        if (me.getLatitude() == null || me.getLongitude() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "User location missing");
+        }
+
+        double radius = me.getRadiusKm() > 0 ? me.getRadiusKm() : 20;
+
+        return prefRepo.findAll().stream()
+
+                // ❌ exclure moi-même
+                .filter(p -> !p.getUser().getId().equals(userId))
+
+                // ❌ localisation obligatoire
+                .filter(p -> p.getLatitude() != null && p.getLongitude() != null)
+
+                // 🔥 calcul distance + score
+                .map(p -> {
+
+                    double dist = haversineKm(
+                            me.getLatitude(),
+                            me.getLongitude(),
+                            p.getLatitude(),
+                            p.getLongitude()
+                    );
+
+                    double score = computeUserCompatibility(me, p, dist);
+
+                    return new AbstractMap.SimpleEntry<>(p, new double[]{dist, score});
+                })
+
+                // 🔥 filtre rayon
+                .filter(e -> e.getValue()[0] <= radius)
+
+                // 🔥 tri par score
+                .sorted((a, b) -> Double.compare(b.getValue()[1], a.getValue()[1]))
+
+                // 🔥 limit
+                .limit(20)
+
+                // 🔥 mapping DTO EXISTANT
+                .map(e -> {
+                    UserPreference p = e.getKey();
+                    double dist = e.getValue()[0];
+                    double score = e.getValue()[1];
+
+                    return UserPreferenceDto.Response.builder()
+                            .id(p.getId())
+                            .userId(p.getUser().getId())
+                            .sports(p.getSports())
+                            .skillLevel(p.getSkillLevel())
+                            .ageMin(p.getAgeMin())
+                            .ageMax(p.getAgeMax())
+                            .latitude(p.getLatitude())
+                            .longitude(p.getLongitude())
+                            .city(p.getCity())
+                            .radiusKm(p.getRadiusKm())
+                            .availability(p.getAvailability())
+                            .groupSizeMin(p.getGroupSizeMin())
+                            .groupSizeMax(p.getGroupSizeMax())
+                            .engagementLevel(p.getEngagementLevel())
+                            .languages(p.getLanguages())
+
+
+
+
+
+                            .build();
+                })
+
+                .toList();
+    }
+
 }

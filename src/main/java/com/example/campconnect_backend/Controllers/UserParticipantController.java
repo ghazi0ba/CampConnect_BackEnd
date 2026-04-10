@@ -16,6 +16,12 @@ public class UserParticipantController {
  
     private final UserParticipantService service;
  
+    // GET /api/participants  →  tous les participants
+    @GetMapping
+    public ResponseEntity<List<UserParticipantDto.Response>> getAll() {
+        return ResponseEntity.ok(service.getAll());
+    }
+
     // POST /api/participants  →  rejoindre un GroupMatch
     @PostMapping
     public ResponseEntity<UserParticipantDto.Response> join(

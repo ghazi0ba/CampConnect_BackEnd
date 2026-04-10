@@ -44,7 +44,7 @@ public class UserParticipantService {
                 .user(user)
                 .groupMatch(gm)
                 .role(req.getRole() != null ? req.getRole() : ParticipantRole.MEMBER)
-                .status(ParticipantStatus.PENDING)
+                .status(req.getRole() == ParticipantRole.ADMIN ? ParticipantStatus.ACCEPTED : ParticipantStatus.PENDING)
                 .score(0)
                 .build();
  
@@ -66,19 +66,26 @@ public class UserParticipantService {
         return upRepo.findByUserId(userId)
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
- 
-    // ── Update role / status / score ─────────────────────────────────────────
- 
+
+    // ── Get All Participants ─────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<UserParticipantDto.Response> getAll() {
+        return upRepo.findAll()
+                .stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    // ── Update a participation ───────────────────────────────────────────────
+
     @Transactional
-    public UserParticipantDto.Response update(Long userId, Long groupMatchId,
-                                               UserParticipantDto.UpdateRequest req) {
-        UserParticipant up = upRepo.findByUserIdAndGroupMatchId(userId, groupMatchId)
+    public UserParticipantDto.Response update(Long userId, Long groupMatchId, UserParticipantDto.UpdateRequest req) {
+        UserParticipant up = upRepo.findById(new UserParticipantId(userId, groupMatchId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participation not found"));
- 
+
         if (req.getRole() != null)   up.setRole(req.getRole());
         if (req.getStatus() != null) up.setStatus(req.getStatus());
         up.setScore(req.getScore());
- 
+
         return toResponse(upRepo.save(up));
     }
  

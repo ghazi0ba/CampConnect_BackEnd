@@ -1,6 +1,9 @@
 package com.example.campconnect_backend.Controllers;
 
+import com.example.campconnect_backend.Dto.GroupMatchDto;
 import com.example.campconnect_backend.Dto.UserPreferenceDto;
+import com.example.campconnect_backend.Entities.GroupMatch;
+import com.example.campconnect_backend.Services.AiMatchingService;
 import com.example.campconnect_backend.Services.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,15 +11,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/userpreferences")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class UserPreferenceController {
 
     private final UserPreferenceService service;
+    private final AiMatchingService matchingService ;
 
     /**
      * Save or update user preferences
@@ -30,7 +35,12 @@ public class UserPreferenceController {
         UserPreferenceDto.Response response = service.save(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+    @GetMapping("/match-users")
+    public ResponseEntity<List<UserPreferenceDto.Response>> matchUsers(
+            @RequestParam Long userId) {
 
+        return ResponseEntity.ok(matchingService.findMatchingUsers(userId));
+    }
     /**
      * Get preferences for a user
      * GET /api/users/{userId}/preferences
@@ -117,19 +127,11 @@ public class UserPreferenceController {
      * GET /api/users/groups-by-distance?latitude=X&longitude=Y&maxDistance=Z
      */
     @GetMapping("/groups-by-distance")
-    public ResponseEntity<Map<String, Object>> getGroupsByDistance(
-            @RequestParam Double latitude,
-            @RequestParam Double longitude,
-            @RequestParam Double maxDistance) {
+    public  ResponseEntity<List<GroupMatchDto.Response>> getGroupsByDistance(
+            @RequestParam Long userId) {
 
-        // This endpoint would integrate with group matching
-        // For now, returning a sample response structure
-        return ResponseEntity.ok(Map.of(
-                "latitude", latitude,
-                "longitude", longitude,
-                "maxDistance", maxDistance + " km",
-                "groups", new Object[]{},
-                "message", "Distance-based groups feature - to be implemented with group matching service"
-        ));
+        List<GroupMatchDto.Response> groups = matchingService.findNearbyGroups(userId);
+
+        return ResponseEntity.ok(groups);
     }
 }
