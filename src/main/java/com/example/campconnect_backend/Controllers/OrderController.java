@@ -1,18 +1,14 @@
 package com.example.campconnect_backend.Controllers;
 
 import com.example.campconnect_backend.Dto.OrderDto;
-import com.example.campconnect_backend.Entities.OrderStatus;
-import com.example.campconnect_backend.Repositories.UserRepository;
 import com.example.campconnect_backend.Services.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Arrays;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -20,37 +16,37 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-    private final UserRepository userRepository;
 
-    @GetMapping("/my")
-    public ResponseEntity<List<OrderDto.Response>> getMyOrders(Authentication auth) {
-        return ResponseEntity.ok(orderService.findByUser(getUserId(auth)));
+    @PostMapping
+    public ResponseEntity<OrderDto.Response> create(@Valid @RequestBody OrderDto.CreateRequest request) {
+        return ResponseEntity.ok(orderService.create(request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderDto.Response> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.findById(id));
+        return ResponseEntity.ok(orderService.getById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<OrderDto.Response> create(@Valid @RequestBody OrderDto.Request request,
-                                                    Authentication auth) {
-        return ResponseEntity.ok(orderService.create(getUserId(auth), request));
-    }
-
-    @GetMapping("/statuses")
-    public ResponseEntity<List<OrderStatus>> getStatuses() {
-        return ResponseEntity.ok(Arrays.asList(OrderStatus.values()));
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    public ResponseEntity<Page<OrderDto.Response>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(orderService.getAll(pageable));
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<OrderDto.Response> updateStatus(@PathVariable Long id,
-                                                          @RequestParam String status) {
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    public ResponseEntity<OrderDto.Response> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status
+    ) {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 
-    private Long getUserId(Authentication auth) {
-        String email = ((UserDetails) auth.getPrincipal()).getUsername();
-        return userRepository.findByEmail(email).orElseThrow().getId();
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        orderService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

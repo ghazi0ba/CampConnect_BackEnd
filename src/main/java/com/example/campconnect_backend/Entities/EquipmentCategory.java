@@ -1,0 +1,14 @@
+package com.example.campconnect_backend.Entities;
+
+public enum EquipmentCategory {
+    SHELTER_SLEEPING,
+    COOKING_FOOD,
+    LIGHTING_POWER,
+    CLOTHING_FOOTWEAR,
+    BACKPACKS_STORAGE,
+    FURNITURE_COMFORT,
+    NAVIGATION_SAFETY,
+    HYGIENE_PERSONAL_CARE,
+    OUTDOOR_ACTIVITIES,
+    ACCESSORIES
+}

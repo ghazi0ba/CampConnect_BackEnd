@@ -1,6 +1,5 @@
 package com.example.campconnect_backend.Configs;
 
-//import com.example.campconnect_backend.security.JwtAuthFilter;
 import com.example.campconnect_backend.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -32,17 +31,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/camping-sites/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/equipment/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/camping-sites/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/equipment/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/equipment/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/equipment/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/equipment/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/equipment/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -29,6 +29,22 @@ public class Equipment {
     @Column(nullable = false)
     private Boolean available;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EquipmentCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EquipmentSubCategory subCategory;
+
     @ManyToMany(mappedBy = "equipmentList")
     private List<Order> orders;
+
+    @PrePersist
+    @PreUpdate
+    private void syncCategoryFromSubCategory() {
+        if (subCategory != null) {
+            this.category = subCategory.getCategory();
+        }
+    }
 }
