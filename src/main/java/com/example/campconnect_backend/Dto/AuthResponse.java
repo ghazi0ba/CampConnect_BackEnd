@@ -1,11 +1,9 @@
 package com.example.campconnect_backend.Dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -15,3 +13,6 @@ public class AuthResponse {
     private String role;
     private String message;
 }
+
+
+

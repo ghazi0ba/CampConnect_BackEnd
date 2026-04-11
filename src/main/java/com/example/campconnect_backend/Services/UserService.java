@@ -41,7 +41,7 @@ public class UserService {
     public UserDto.Response update(Long id, UserDto.UpdateRequest request) {
         User user = getOrThrow(id);
 
-        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.findByEmail(request.getEmail()) != null) {
             throw new BadRequestException("Email already in use: " + request.getEmail());
         }
 
