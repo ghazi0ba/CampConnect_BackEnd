@@ -13,6 +13,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -63,6 +65,16 @@ public class EquipmentServiceImpl implements EquipmentService {
 
         return toResponse(equipment);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EquipmentDto.Response> getAll() {
+        return equipmentRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
 
     @Override
     public void delete(Long id) {

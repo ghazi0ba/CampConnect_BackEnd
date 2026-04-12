@@ -28,13 +28,13 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    //@PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     public ResponseEntity<Page<OrderDto.Response>> getAll(Pageable pageable) {
         return ResponseEntity.ok(orderService.getAll(pageable));
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    //@PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     public ResponseEntity<OrderDto.Response> updateStatus(
             @PathVariable Long id,
             @RequestParam String status
@@ -43,7 +43,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
+    //@PreAuthorize("hasAnyRole('ADMIN','AGENT')")
 
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         orderService.delete(id);

@@ -8,6 +8,18 @@ import lombok.Data;
 
 public class UserDto {
 
+
+    @Data
+    public static class CreateRequest {
+
+        private String firstName;
+        private String lastName;
+        private String email;
+        private String password;
+        private String phone;
+        private Role role;
+    }
+
     @Data
     public static class Response {
         private Long id;

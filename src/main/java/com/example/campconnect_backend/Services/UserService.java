@@ -22,6 +22,37 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+
+    //create User only by ADMIN
+    public UserDto.Response create(UserDto.CreateRequest request) {
+
+
+
+        // 1. check email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new BadRequestException("Email already in use: " + request.getEmail());
+        }
+
+        // 2. create user entity
+        User user = new User();
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
+        user.setPhone(request.getPhone());
+        user.setRole(request.getRole());
+
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+
+
+        // 5. save
+        User saved = userRepository.save(user);
+
+        return toResponse(saved);
+    }
+
     public List<UserDto.Response> findAll() {
         return userRepository.findAll().stream()
                 .map(this::toResponse)

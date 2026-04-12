@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/equipment")
 @RequiredArgsConstructor
@@ -31,7 +33,8 @@ public class EquipmentController {
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             Pageable pageable
-    ) {
+    )
+    {
         EquipmentDto.Filter filter = new EquipmentDto.Filter();
         filter.setKeyword(keyword);
         filter.setCategory(category);
@@ -43,19 +46,24 @@ public class EquipmentController {
         return ResponseEntity.ok(equipmentService.search(filter, pageable));
     }
 
+    @GetMapping
+    public ResponseEntity<List<EquipmentDto.Response>> getAll() {
+        return ResponseEntity.ok(equipmentService.getAll());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<EquipmentDto.Response> getById(@PathVariable Long id) {
         return ResponseEntity.ok(equipmentService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentDto.Response> create(@Valid @RequestBody EquipmentDto.CreateRequest request) {
         return ResponseEntity.ok(equipmentService.create(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentDto.Response> update(
             @PathVariable Long id,
             @Valid @RequestBody EquipmentDto.UpdateRequest request
@@ -64,7 +72,7 @@ public class EquipmentController {
     }
 
     @PatchMapping("/{id}/availability")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentDto.Response> setAvailability(
             @PathVariable Long id,
             @RequestParam boolean available
@@ -73,7 +81,7 @@ public class EquipmentController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+   // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         equipmentService.delete(id);
         return ResponseEntity.noContent().build();

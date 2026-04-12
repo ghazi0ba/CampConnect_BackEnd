@@ -34,20 +34,26 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/camping-sites/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/**").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/equipment/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/equipment/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/equipment/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/equipment/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/equipment/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/equipment/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/equipment/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/equipment/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/equipment/**").hasRole("ADMIN")
+                        //.requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/orders/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
-                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasAnyRole("ADMIN", "AGENT")
-
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
