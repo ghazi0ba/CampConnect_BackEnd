@@ -6,84 +6,56 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/equipment")
+@RequestMapping("/api/equipments")
 @RequiredArgsConstructor
 public class EquipmentController {
 
     private final EquipmentService equipmentService;
 
-    /**
-     * Advanced search endpoint with pagination.
-     * Example:
-     * GET /api/equipment/search?keyword=tent&available=true&minPrice=10&maxPrice=200&page=0&size=10&sort=price,asc
-     */
-    @GetMapping("/search")
-    public ResponseEntity<Page<EquipmentDto.Response>> search(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) com.example.campconnect_backend.Entities.EquipmentCategory category,
-            @RequestParam(required = false) com.example.campconnect_backend.Entities.EquipmentSubCategory subCategory,
-            @RequestParam(required = false) Boolean available,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            Pageable pageable
-    )
-    {
-        EquipmentDto.Filter filter = new EquipmentDto.Filter();
-        filter.setKeyword(keyword);
-        filter.setCategory(category);
-        filter.setSubCategory(subCategory);
-        filter.setAvailable(available);
-        filter.setMinPrice(minPrice);
-        filter.setMaxPrice(maxPrice);
-
-        return ResponseEntity.ok(equipmentService.search(filter, pageable));
-    }
-
-    @GetMapping
-    public ResponseEntity<List<EquipmentDto.Response>> getAll() {
-        return ResponseEntity.ok(equipmentService.getAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<EquipmentDto.Response> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(equipmentService.getById(id));
-    }
-
     @PostMapping
-    //@PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EquipmentDto.Response> create(@Valid @RequestBody EquipmentDto.CreateRequest request) {
-        return ResponseEntity.ok(equipmentService.create(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public EquipmentDto.Response create(@Valid @RequestBody EquipmentDto.CreateRequest request) {
+        return equipmentService.create(request);
     }
 
     @PutMapping("/{id}")
-    //@PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EquipmentDto.Response> update(
-            @PathVariable Long id,
-            @Valid @RequestBody EquipmentDto.UpdateRequest request
-    ) {
-        return ResponseEntity.ok(equipmentService.update(id, request));
+    public EquipmentDto.Response update(@PathVariable Long id, @Valid @RequestBody EquipmentDto.UpdateRequest request) {
+        return equipmentService.update(id, request);
+    }
+
+    @PatchMapping("/{id}")
+    public EquipmentDto.Response patch(@PathVariable Long id, @Valid @RequestBody EquipmentDto.PatchRequest request) {
+        return equipmentService.patch(id, request);
+    }
+
+    @GetMapping("/{id}")
+    public EquipmentDto.Response getById(@PathVariable Long id) {
+        return equipmentService.getById(id);
+    }
+
+    @GetMapping
+    public Page<EquipmentDto.Response> search(EquipmentDto.Filter filter, Pageable pageable) {
+        return equipmentService.search(filter, pageable);
     }
 
     @PatchMapping("/{id}/availability")
-    //@PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EquipmentDto.Response> setAvailability(
-            @PathVariable Long id,
-            @RequestParam boolean available
-    ) {
-        return ResponseEntity.ok(equipmentService.setAvailability(id, available));
+    public EquipmentDto.Response setAvailability(@PathVariable Long id, @RequestParam boolean available) {
+        return equipmentService.setAvailability(id, available);
+    }
+
+    @PatchMapping("/{id}/stock")
+    public EquipmentDto.Response adjustStock(@PathVariable Long id,
+                                             @Valid @RequestBody EquipmentDto.StockAdjustmentRequest request) {
+        return equipmentService.adjustStock(id, request);
     }
 
     @DeleteMapping("/{id}")
-   // @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         equipmentService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }
