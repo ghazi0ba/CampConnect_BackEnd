@@ -1,10 +1,12 @@
 package com.example.campconnect_backend.Dto;
 
 import com.example.campconnect_backend.Entities.OrderStatus;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,10 +18,17 @@ public class OrderDto {
         private Long userId;
 
         @NotEmpty
-        private List<Long> equipmentIds;
+        private List<ItemRequest> items;
+    }
 
-        // optional (default handled in service: PENDING)
-        private OrderStatus status;
+    @Data
+    public static class ItemRequest {
+        @NotNull
+        private Long equipmentId;
+
+        @NotNull
+        @Min(1)
+        private Integer quantity;
     }
 
     @Data
@@ -38,9 +47,11 @@ public class OrderDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class EquipmentItem {
-        private Long id;
-        private String name;
-        private Double price;
+        private Long equipmentId;
+        private String equipmentName;
+        private Integer quantity;
+        private BigDecimal unitPrice;
+        private BigDecimal lineTotal;
     }
 
     @Data
@@ -50,9 +61,9 @@ public class OrderDto {
     public static class Response {
         private Long id;
         private LocalDateTime orderDate;
-        private Double totalAmount;
+        private BigDecimal totalAmount;
         private OrderStatus status;
         private UserSummary user;
-        private List<EquipmentItem> equipment;
+        private List<EquipmentItem> items;
     }
 }

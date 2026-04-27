@@ -81,8 +81,9 @@ public class Equipment {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToMany(mappedBy = "equipmentList")
-    private List<Order> orders;
+    @OneToMany(mappedBy = "equipment")
+    private List<OrderItem> orderItems;
+
 
     @PrePersist
     @PreUpdate

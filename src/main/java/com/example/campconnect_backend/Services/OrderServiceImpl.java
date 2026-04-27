@@ -2,17 +2,19 @@ package com.example.campconnect_backend.Services;
 
 import com.example.campconnect_backend.Dto.OrderDto;
 import com.example.campconnect_backend.Entities.*;
+import com.example.campconnect_backend.exception.BusinessValidationException;
+import com.example.campconnect_backend.exception.ResourceNotFoundException;
 import com.example.campconnect_backend.Repositories.EquipmentRepository;
 import com.example.campconnect_backend.Repositories.OrderRepository;
 import com.example.campconnect_backend.Repositories.UserRepository;
-import com.example.campconnect_backend.Services.OrderService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,23 +29,54 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto.Response create(OrderDto.CreateRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + request.getUserId()));
-
-        List<Equipment> equipmentList = equipmentRepository.findAllById(request.getEquipmentIds());
-        if (equipmentList.size() != request.getEquipmentIds().size()) {
-            throw new EntityNotFoundException("One or more equipment IDs are invalid");
-        }
-
-        double totalAmount = equipmentList.stream()
-                .mapToDouble(Equipment::getPrice)
-                .sum();
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
 
         Order order = Order.builder()
                 .user(user)
-                .equipmentList(equipmentList)
-                .totalAmount(totalAmount)
-                .status(request.getStatus() != null ? request.getStatus() : OrderStatus.PENDING)
+                .status(OrderStatus.PENDING)
+                .deleted(false)
                 .build();
+
+        List<OrderItem> items = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (OrderDto.ItemRequest reqItem : request.getItems()) {
+            Equipment equipment = equipmentRepository.findByIdAndDeletedFalse(reqItem.getEquipmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + reqItem.getEquipmentId()));
+
+            if (!Boolean.TRUE.equals(equipment.getAvailable())) {
+                throw new BusinessValidationException("Equipment is not available: " + equipment.getName());
+            }
+
+            int requestedQty = reqItem.getQuantity();
+            int availableQty = equipment.getTotalQuantity() - equipment.getReservedQuantity();
+
+            if (requestedQty > availableQty) {
+                throw new BusinessValidationException(
+                        "Insufficient stock for equipment '" + equipment.getName() + "'. Available: " + availableQty
+                );
+            }
+
+            // reserve stock
+            equipment.setReservedQuantity(equipment.getReservedQuantity() + requestedQty);
+
+            BigDecimal unitPrice = equipment.getPrice();
+            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(requestedQty));
+
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .equipment(equipment)
+                    .quantity(requestedQty)
+                    .unitPrice(unitPrice)
+                    .lineTotal(lineTotal)
+                    .build();
+
+            items.add(item);
+            totalAmount = totalAmount.add(lineTotal);
+        }
+
+        order.setItems(items);
+        order.setTotalAmount(totalAmount);
 
         Order saved = orderRepository.save(order);
         return toResponse(saved);
@@ -52,38 +85,57 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public OrderDto.Response getById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + id));
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return toResponse(order);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<OrderDto.Response> getAll(Pageable pageable) {
-        return orderRepository.findAll(pageable).map(this::toResponse);
+        return orderRepository.findAllByDeletedFalse(pageable).map(this::toResponse);
     }
 
     @Override
-    public OrderDto.Response updateStatus(Long id, String status) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + id));
+    public OrderDto.Response updateStatus(Long id, OrderStatus newStatus) {
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
-        try {
-            order.setStatus(OrderStatus.valueOf(status.toUpperCase()));
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid order status: " + status);
+        validateTransition(order.getStatus(), newStatus);
+
+        // release reserved stock when cancelling
+        if (newStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) {
+            for (OrderItem item : order.getItems()) {
+                Equipment equipment = item.getEquipment();
+                int newReserved = equipment.getReservedQuantity() - item.getQuantity();
+                equipment.setReservedQuantity(Math.max(0, newReserved));
+            }
         }
 
+        order.setStatus(newStatus);
         Order updated = orderRepository.save(order);
         return toResponse(updated);
     }
 
     @Override
     public void delete(Long id) {
-        if (!orderRepository.existsById(id)) {
-            throw new EntityNotFoundException("Order not found with id: " + id);
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        order.setDeleted(true);
+        orderRepository.save(order);
+    }
+
+    private void validateTransition(OrderStatus current, OrderStatus next) {
+        if (current == next) return;
+
+        boolean allowed =
+                (current == OrderStatus.PENDING && (next == OrderStatus.PAID || next == OrderStatus.CANCELLED)) ||
+                        (current == OrderStatus.PAID && (next == OrderStatus.COMPLETED || next == OrderStatus.CANCELLED));
+
+        if (!allowed) {
+            throw new BusinessValidationException("Invalid status transition: " + current + " -> " + next);
         }
-        orderRepository.deleteById(id);
     }
 
     private OrderDto.Response toResponse(Order order) {
@@ -94,11 +146,13 @@ public class OrderServiceImpl implements OrderService {
                 .email(order.getUser().getEmail())
                 .build();
 
-        List<OrderDto.EquipmentItem> equipmentItems = order.getEquipmentList().stream()
-                .map(eq -> OrderDto.EquipmentItem.builder()
-                        .id(eq.getId())
-                        .name(eq.getName())
-                        .price(eq.getPrice())
+        List<OrderDto.EquipmentItem> equipmentItems = order.getItems().stream()
+                .map(item -> OrderDto.EquipmentItem.builder()
+                        .equipmentId(item.getEquipment().getId())
+                        .equipmentName(item.getEquipment().getName())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .lineTotal(item.getLineTotal())
                         .build())
                 .toList();
 
@@ -108,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
                 .user(userSummary)
-                .equipment(equipmentItems)
+                .items(equipmentItems)
                 .build();
     }
 }
