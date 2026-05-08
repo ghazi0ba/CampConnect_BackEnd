@@ -30,6 +30,8 @@ public class MatchResult {
     private double skillScore;
     private double availabilityScore;
     private double groupSizeScore;
+    private double ageScore;
+    private double languagesScore;
 
     // Distance en km
     private double distanceKm;

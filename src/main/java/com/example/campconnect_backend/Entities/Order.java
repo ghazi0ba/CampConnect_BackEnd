@@ -27,7 +27,7 @@ public class Order {
     private Double totalAmount;
 
     @Column(nullable = false)
-    private String status;  // PENDING, PAID, CANCELLED
+    private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

@@ -6,7 +6,7 @@ import com.example.campconnect_backend.Entities.ParticipantStatus;
 import lombok.*;
 import java.time.LocalDateTime;
  
-// ── UserParticipant DTOs ─────────────────────────────────────────────────────
+
  
 public class UserParticipantDto {
  

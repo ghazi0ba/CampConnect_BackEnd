@@ -20,7 +20,7 @@ public class UserParticipantService {
     private final UserRepository userRepo;
     private final GroupMatchRepository groupMatchRepo;
  
-    // ── Join a GroupMatch ────────────────────────────────────────────────────
+  
  
     @Transactional
     public UserParticipantDto.Response join(UserParticipantDto.Request req) {
@@ -51,7 +51,8 @@ public class UserParticipantService {
         return toResponse(upRepo.save(up));
     }
  
-    // ── Get participants of a GroupMatch ─────────────────────────────────────
+   
+
  
     @Transactional(readOnly = true)
     public List<UserParticipantDto.Response> getByGroupMatch(Long groupMatchId) {
@@ -59,7 +60,7 @@ public class UserParticipantService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
  
-    // ── Get GroupMatches of a User ───────────────────────────────────────────
+
  
     @Transactional(readOnly = true)
     public List<UserParticipantDto.Response> getByUser(Long userId) {
@@ -67,7 +68,6 @@ public class UserParticipantService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Get All Participants ─────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<UserParticipantDto.Response> getAll() {
@@ -75,7 +75,7 @@ public class UserParticipantService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Update a participation ───────────────────────────────────────────────
+
 
     @Transactional
     public UserParticipantDto.Response update(Long userId, Long groupMatchId, UserParticipantDto.UpdateRequest req) {
@@ -89,7 +89,7 @@ public class UserParticipantService {
         return toResponse(upRepo.save(up));
     }
  
-    // ── Leave a GroupMatch ───────────────────────────────────────────────────
+
  
     @Transactional
     public void leave(Long userId, Long groupMatchId) {
@@ -100,16 +100,14 @@ public class UserParticipantService {
         upRepo.deleteById(id);
     }
  
-    // ── Leaderboard ──────────────────────────────────────────────────────────
+
  
     @Transactional(readOnly = true)
     public List<UserParticipantDto.Response> getLeaderboard() {
         return upRepo.findLeaderboard()
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
- 
-    // ── Mapper ───────────────────────────────────────────────────────────────
- 
+
     private UserParticipantDto.Response toResponse(UserParticipant up) {
         return UserParticipantDto.Response.builder()
                 .userId(up.getUser().getId())

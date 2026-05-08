@@ -53,4 +53,10 @@ public class UserController {
         UserPreferenceDto.Response response = upservice.save(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/{userId}/preferences")
+    public ResponseEntity<UserPreferenceDto.Response> getPreferences(@PathVariable Long userId) {
+        UserPreferenceDto.Response response = upservice.getByUser(userId);
+        return ResponseEntity.ok(response);
+    }
 }

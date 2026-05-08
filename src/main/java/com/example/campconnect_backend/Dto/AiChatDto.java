@@ -1,5 +1,7 @@
 package com.example.campconnect_backend.Dto;
 
+
+
 public class AiChatDto {
 
     public static class Request {

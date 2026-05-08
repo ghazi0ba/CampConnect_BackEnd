@@ -23,6 +23,8 @@ public class MatchResultDto {
         private double skillScore;
         private double availabilityScore;
         private double groupSizeScore;
+        private double ageScore;
+        private double languagesScore;
         private double distanceKm;
         private LocalDateTime scheduledAt;
         private String matchLabel;           // "Excellent", "Bon", "Moyen"

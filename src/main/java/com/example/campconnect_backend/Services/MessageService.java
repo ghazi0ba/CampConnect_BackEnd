@@ -22,7 +22,7 @@ public class MessageService {
     private final GroupMatchRepository groupMatchRepo;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // ── Envoyer un message privé via WebSocket ───────────────────────────────
+
 
     @Transactional
     public MessageDto.Response sendPrivate(MessageDto.WsPayload payload) {
@@ -38,7 +38,7 @@ public class MessageService {
         Message saved = messageRepo.save(msg);
         MessageDto.Response response = toResponse(saved);
 
-        // Push WebSocket au destinataire
+
         messagingTemplate.convertAndSendToUser(
                 receiver.getId().toString(),
                 "/queue/messages",
@@ -47,7 +47,7 @@ public class MessageService {
         return response;
     }
 
-    // ── Envoyer un message dans un groupe ────────────────────────────────────
+
 
     @Transactional
     public MessageDto.Response sendToGroup(MessageDto.WsPayload payload) {
@@ -64,7 +64,7 @@ public class MessageService {
         Message saved = messageRepo.save(msg);
         MessageDto.Response response = toResponse(saved);
 
-        // Broadcast au topic du groupe
+
         messagingTemplate.convertAndSend(
                 "/topic/group/" + gm.getId(),
                 response
@@ -72,7 +72,6 @@ public class MessageService {
         return response;
     }
 
-    // ── Historique conversation privée ───────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<MessageDto.Response> getConversation(Long userId1, Long userId2) {
@@ -80,7 +79,7 @@ public class MessageService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Historique messages d'un groupe ──────────────────────────────────────
+
 
     @Transactional(readOnly = true)
     public List<MessageDto.Response> getGroupMessages(Long groupMatchId) {
@@ -88,7 +87,7 @@ public class MessageService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Messages non lus ─────────────────────────────────────────────────────
+
 
     @Transactional(readOnly = true)
     public List<MessageDto.Response> getUnread(Long userId) {
@@ -96,7 +95,7 @@ public class MessageService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Dernières conversations ───────────────────────────────────────────────
+
 
     @Transactional(readOnly = true)
     public List<MessageDto.Response> getLastConversations(Long userId) {
@@ -104,7 +103,7 @@ public class MessageService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Marquer comme lu ─────────────────────────────────────────────────────
+
 
     @Transactional
     public void markAsRead(Long senderId, Long receiverId) {

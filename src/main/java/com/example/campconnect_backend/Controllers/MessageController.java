@@ -3,10 +3,11 @@ package com.example.campconnect_backend.Controllers;
 import com.example.campconnect_backend.Dto.MessageDto;
 import com.example.campconnect_backend.Services.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.messaging.handler.annotation.*;
-import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,21 +18,25 @@ public class MessageController {
 
     private final MessageService service;
 
-    // ── WebSocket handlers ───────────────────────────────────────────────────
+    @PostMapping("/private")
+    public ResponseEntity<MessageDto.Response> sendPrivate(@RequestBody MessageDto.WsPayload payload) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.sendPrivate(payload));
+    }
 
-    // Client envoie : /app/chat.private
+    @PostMapping("/group")
+    public ResponseEntity<MessageDto.Response> sendGroup(@RequestBody MessageDto.WsPayload payload) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.sendToGroup(payload));
+    }
+
     @MessageMapping("/chat.private")
     public void handlePrivate(MessageDto.WsPayload payload) {
         service.sendPrivate(payload);
     }
 
-    // Client envoie : /app/chat.group
     @MessageMapping("/chat.group")
     public void handleGroup(MessageDto.WsPayload payload) {
         service.sendToGroup(payload);
     }
-
-    // ── REST endpoints ───────────────────────────────────────────────────────
 
     @GetMapping("/conversation/{userId1}/{userId2}")
     public ResponseEntity<List<MessageDto.Response>> getConversation(

@@ -11,8 +11,8 @@ public class MessageDto {
     public static class Request {
         private String content;
         private Long senderId;
-        private Long receiverId;       // pour chat privé
-        private Long groupMatchId;     // pour chat groupe
+        private Long receiverId;
+        private Long groupMatchId;
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor @Builder

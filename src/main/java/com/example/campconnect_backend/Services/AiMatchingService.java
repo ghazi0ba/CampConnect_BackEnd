@@ -25,14 +25,16 @@ public class AiMatchingService {
     private final UserRepository userRepo;
     private final MatchResultRepository matchRepo;
 
-    // ── Poids des critères (total = 1.0) ────────────────────────────────────
-    private static final double W_SPORT = 0.35;
-    private static final double W_LOCATION = 0.30;
+
+    private static final double W_SPORT = 0.30;
+    private static final double W_LOCATION = 0.25;
     private static final double W_SKILL = 0.15;
     private static final double W_AVAILABILITY = 0.10;
     private static final double W_GROUP_SIZE = 0.10;
+    private static final double W_AGE = 0.05;
+    private static final double W_LANGUAGES = 0.05;
 
-    // ── Calculer les matches pour un user ───────────────────────────────────
+
 
     @Transactional
     public List<MatchResultDto.Response> computeMatches(Long userId) {
@@ -58,7 +60,7 @@ public class AiMatchingService {
         return results.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // ── Construire un MatchResult pour un groupe ─────────────────────────────
+
 
     private MatchResult buildMatchResult(User user, UserPreference pref, GroupMatch gm) {
 
@@ -67,12 +69,16 @@ public class AiMatchingService {
         double skillScore = computeSkillScore(pref, gm);
         double availabilityScore = computeAvailabilityScore(pref, gm);
         double groupSizeScore = computeGroupSizeScore(pref, gm);
+        double ageScore = computeAgeScore(user, pref);
+        double languagesScore = computeLanguagesScore(pref, gm);
 
         double total = (sportScore * W_SPORT)
                 + (locationScore * W_LOCATION)
                 + (skillScore * W_SKILL)
                 + (availabilityScore * W_AVAILABILITY)
-                + (groupSizeScore * W_GROUP_SIZE);
+                + (groupSizeScore * W_GROUP_SIZE)
+                + (ageScore * W_AGE)
+                + (languagesScore * W_LANGUAGES);
 
         double distanceKm = computeDistance(pref, gm);
 
@@ -85,6 +91,8 @@ public class AiMatchingService {
                 .skillScore(round(skillScore * 100))
                 .availabilityScore(round(availabilityScore * 100))
                 .groupSizeScore(round(groupSizeScore * 100))
+                .ageScore(round(ageScore * 100))
+                .languagesScore(round(languagesScore * 100))
                 .distanceKm(round(distanceKm))
                 .build();
     }
@@ -99,8 +107,7 @@ public class AiMatchingService {
         return userSports.contains(gm.getSport().toLowerCase()) ? 1.0 : 0.0;
     }
 
-    // ── Critère 2 : Localisation (30%) ──────────────────────────────────────
-    // Score décroît avec la distance selon rayon préféré
+
 
     private double computeLocationScore(UserPreference pref, GroupMatch gm) {
         if (pref.getLatitude() == null || gm.getLatitude() == null) return 0.5;
@@ -124,7 +131,7 @@ public class AiMatchingService {
         };
     }
 
-    // ── Critère 4 : Disponibilité (10%) ──────────────────────────────────────
+
 
     private double computeAvailabilityScore(UserPreference pref, GroupMatch gm) {
         if (pref.getAvailability() == null || gm.getScheduledAt() == null) return 0.5;
@@ -140,7 +147,7 @@ public class AiMatchingService {
         return "evening";
     }
 
-    // ── Critère 5 : Taille de groupe (10%) ───────────────────────────────────
+
 
     private double computeGroupSizeScore(UserPreference pref, GroupMatch gm) {
         int size = gm.getMaxParticipants();
@@ -148,6 +155,25 @@ public class AiMatchingService {
         int diff = Math.min(Math.abs(size - pref.getGroupSizeMin()),
                 Math.abs(size - pref.getGroupSizeMax()));
         return Math.max(0, 1.0 - diff * 0.15);
+    }
+
+    // ── Critère 6 : Age (5%) ──────────────────────────────────────────────
+    private double computeAgeScore(User user, UserPreference pref) {
+
+        int age = java.time.LocalDate.now().getYear() - 2001;
+        if (age >= pref.getAgeMin() && age <= pref.getAgeMax()) return 1.0;
+        int diff = Math.min(Math.abs(age - pref.getAgeMin()), Math.abs(age - pref.getAgeMax()));
+        return Math.max(0.1, 1.0 - diff * 0.1);
+    }
+
+    // ── Critère 7 : Languages (5%) ─────────────────────────────────────────
+    private double computeLanguagesScore(UserPreference pref, GroupMatch gm) {
+        if (pref.getLanguages() == null) return 0.5;
+        // Since GroupMatch doesn't have languages, assume English/French common
+        List<String> userLangs = Arrays.stream(pref.getLanguages().split(","))
+                .map(String::trim).map(String::toLowerCase).toList();
+        if (userLangs.contains("english") || userLangs.contains("french")) return 1.0;
+        return 0.5;
     }
 
     // ── Distance GPS (Haversine) ──────────────────────────────────────────────
@@ -176,7 +202,7 @@ public class AiMatchingService {
         return Math.round(v * 10.0) / 10.0;
     }
 
-    // ── Mapper ───────────────────────────────────────────────────────────────
+
 
     private MatchResultDto.Response toResponse(MatchResult mr) {
         GroupMatch gm = mr.getMatchedGroup();
@@ -198,16 +224,18 @@ public class AiMatchingService {
                 .skillScore(mr.getSkillScore())
                 .availabilityScore(mr.getAvailabilityScore())
                 .groupSizeScore(mr.getGroupSizeScore())
+                .ageScore(mr.getAgeScore())
+                .languagesScore(mr.getLanguagesScore())
                 .distanceKm(mr.getDistanceKm())
                 .scheduledAt(gm.getScheduledAt())
                 .matchLabel(label)
                 .build();
     }
 
-    // ── AI Chat Method ──────────────────────────────────────────────────────
+
 
     public String chatWithAI(String userMessage) {
-        // Simple AI responses based on keywords
+
         String message = userMessage.toLowerCase().trim();
 
         if (message.contains("hello") || message.contains("hi") || message.contains("bonjour")) {
@@ -238,7 +266,7 @@ public class AiMatchingService {
             return "You're welcome! Happy to help you find your perfect sports match. Enjoy playing!";
         }
 
-        // Default response
+
         return "I'm here to help you with sports group matching and CampConnect features. You can ask me about finding groups, sports, locations, skill levels, or any other questions about the platform!";
     }
     @Transactional(readOnly = true)
@@ -264,10 +292,10 @@ public class AiMatchingService {
 
         return groups.stream()
 
-                // 1. filtrer groupes valides
+
                 .filter(g -> g.getLatitude() != null && g.getLongitude() != null)
 
-                // 2. calcul distance
+
                 .map(g -> {
                     double distance = haversineKm(
                             userLat,
@@ -278,17 +306,17 @@ public class AiMatchingService {
                     return new AbstractMap.SimpleEntry<>(g, distance);
                 })
 
-                // 3. filtrer par distance
+
                 .filter(entry -> entry.getValue() <= maxDistanceKm)
 
-                // 4. TRI INTELLIGENT (AI simple)
+
                 .sorted((e1, e2) -> {
                     double score1 = computeSmartScore(pref, e1.getKey(), e1.getValue());
                     double score2 = computeSmartScore(pref, e2.getKey(), e2.getValue());
-                    return Double.compare(score2, score1); // DESC
+                    return Double.compare(score2, score1);
                 })
 
-                // 5. LIMIT
+
                 .limit(20)
 
                 // 6. MAP DTO
@@ -315,10 +343,9 @@ public class AiMatchingService {
 
         double score = 0;
 
-        // 🔹 Distance (plus proche = meilleur)
+
         score += (1 / (1 + distance)) * 50;
 
-        // 🔹 Sport match
         if (pref.getSports() != null && group.getSport() != null) {
             List<String> sports = Arrays.stream(pref.getSports().split(","))
                     .map(String::trim)
@@ -330,7 +357,7 @@ public class AiMatchingService {
             }
         }
 
-        // 🔹 Taille groupe
+
         if (group.getMaxParticipants() >= pref.getGroupSizeMin()
                 && group.getMaxParticipants() <= pref.getGroupSizeMax()) {
             score += 20;
@@ -345,12 +372,12 @@ public class AiMatchingService {
 
         double radius = me.getRadiusKm() > 0 ? me.getRadiusKm() : 20;
 
-        // distance
+
         if (distance <= radius) {
             score += (1 - (distance / radius)) * 40;
         } else return 0;
 
-        // sport match
+
         if (me.getSports() != null && other.getSports() != null) {
             List<String> mySports = Arrays.stream(me.getSports().split(","))
                     .map(String::trim).map(String::toLowerCase).toList();
@@ -363,7 +390,7 @@ public class AiMatchingService {
             }
         }
 
-        // skill
+
         if (me.getSkillLevel() != null && other.getSkillLevel() != null) {
             int diff = Math.abs(me.getSkillLevel().ordinal() - other.getSkillLevel().ordinal());
 
@@ -371,7 +398,7 @@ public class AiMatchingService {
             else if (diff == 1) score += 10;
         }
 
-        // availability
+
         if (me.getAvailability() != null && other.getAvailability() != null) {
             if (other.getAvailability().toLowerCase().contains(me.getAvailability().toLowerCase())) {
                 score += 10;
@@ -396,13 +423,13 @@ public class AiMatchingService {
 
         return prefRepo.findAll().stream()
 
-                // ❌ exclure moi-même
+
                 .filter(p -> !p.getUser().getId().equals(userId))
 
-                // ❌ localisation obligatoire
+
                 .filter(p -> p.getLatitude() != null && p.getLongitude() != null)
 
-                // 🔥 calcul distance + score
+
                 .map(p -> {
 
                     double dist = haversineKm(
@@ -417,16 +444,16 @@ public class AiMatchingService {
                     return new AbstractMap.SimpleEntry<>(p, new double[]{dist, score});
                 })
 
-                // 🔥 filtre rayon
+
                 .filter(e -> e.getValue()[0] <= radius)
 
-                // 🔥 tri par score
+
                 .sorted((a, b) -> Double.compare(b.getValue()[1], a.getValue()[1]))
 
-                // 🔥 limit
+
                 .limit(20)
 
-                // 🔥 mapping DTO EXISTANT
+
                 .map(e -> {
                     UserPreference p = e.getKey();
                     double dist = e.getValue()[0];
