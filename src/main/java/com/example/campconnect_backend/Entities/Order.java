@@ -50,6 +50,6 @@ public class Order {
     protected void onCreate() {
         orderDate = LocalDateTime.now();
         if (status == null) status = OrderStatus.PENDING;
-        if (totalAmount == null) totalAmount = BigDecimal.ZERO;
+        if (totalAmount == null) status = OrderStatus.CANCELLED;
     }
 }
