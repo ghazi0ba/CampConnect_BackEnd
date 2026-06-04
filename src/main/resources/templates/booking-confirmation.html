@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fafaf5; color: #1a1c19; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        .header { background-color: #163526; padding: 60px 40px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+        .header p { margin: 10px 0 0; opacity: 0.8; font-size: 16px; }
+        .content { padding: 40px; }
+        .details-box { background-color: #f4f4ef; border-radius: 16px; padding: 24px; margin-bottom: 32px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .detail-row:last-child { border-bottom: none; }
+        .label { font-size: 12px; font-weight: bold; text-transform: uppercase; color: #727973; letter-spacing: 1px; }
+        .value { font-weight: 600; color: #163526; }
+        .footer { text-align: center; padding: 40px; color: #727973; font-size: 14px; border-t: 1px solid #eeeee9; }
+        .button { display: inline-block; padding: 16px 32px; background-color: #163526; color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Expedition Confirmed</h1>
+            <p>Get ready for your adventure at <span th:text="${site.name}">Site Name</span></p>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${user.firstName}">Explorer</span>,</p>
+            <p>Your reservation is all set. We've notified the basecamp team of your upcoming arrival. Here are your booking details:</p>
+            
+            <div class="details-box">
+                <div class="detail-row">
+                    <span class="label">Location</span>
+                    <span class="value" th:text="${site.location}">Location</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Check-In</span>
+                    <span class="value" th:text="${checkIn}">Date</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Check-Out</span>
+                    <span class="value" th:text="${checkOut}">Date</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Status</span>
+                    <span class="value" style="color: #466553;">CONFIRMED</span>
+                </div>
+            </div>
+ 
+            <div style="text-align: center;">
+                <a href="http://localhost:4200" class="button">View My Trips</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 CampConnect. Happy Trails!</p>
+        </div>
+    </div>
+</body>
+</html>

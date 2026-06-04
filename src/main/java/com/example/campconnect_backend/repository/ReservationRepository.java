@@ -10,11 +10,14 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     List<Reservation> findByUserId(Long userId);
     List<Reservation> findByCampingSiteId(Long campingSiteId);
+    List<Reservation> findByStatusAndPaymentStatusAndPaymentDeadlineBefore(
+            String status, String paymentStatus, Date deadline);
+    List<Reservation> findByStatusAndStartDateBefore(String status, Date date);
 
-    @Query("SELECT COUNT(r) > 0 FROM Reservation r WHERE r.campingSite.id = :siteId " +
+    @Query("SELECT COALESCE(SUM(r.guests), 0) FROM Reservation r WHERE r.campingSite.id = :siteId " +
             "AND r.status != 'CANCELLED' " +
             "AND r.startDate < :endDate AND r.endDate > :startDate")
-    boolean existsOverlap(@Param("siteId") Long siteId,
-                          @Param("startDate") Date startDate,
-                          @Param("endDate") Date endDate);
+    int countGuestsOverlap(@Param("siteId") Long siteId,
+                           @Param("startDate") Date startDate,
+                           @Param("endDate") Date endDate);
 }

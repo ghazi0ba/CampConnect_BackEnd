@@ -8,4 +8,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByCampingSiteId(Long campingSiteId);
     List<Review> findByUserId(Long userId);
     List<Review> findByDeletedFalse();
+    List<Review> findByFlaggedTrueAndDeletedFalse();
 }

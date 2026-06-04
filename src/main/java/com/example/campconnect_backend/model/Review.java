@@ -13,6 +13,8 @@ public class Review {
     private String comment;
     private Date createdAt;
     private boolean deleted = false;
+    private boolean flagged = false;
+    private String flagReason;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

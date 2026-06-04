@@ -15,4 +15,12 @@ public class User {
     private String password;
     private String role;
     private String phone;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_favorites",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "site_id")
+    )
+    private java.util.Set<CampingSite> favorites = new java.util.HashSet<>();
 }

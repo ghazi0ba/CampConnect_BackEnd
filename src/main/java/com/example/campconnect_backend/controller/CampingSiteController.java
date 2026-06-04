@@ -25,6 +25,11 @@ public class CampingSiteController {
         return service.findByLocation(location);
     }
 
+    @GetMapping("/available")
+    public List<CampingSite> findAvailable(@RequestParam String date) {
+        return service.findAvailable(date);
+    }
+
     @PostMapping
     public CampingSite create(@RequestBody CampingSite site) { return service.create(site); }
 
