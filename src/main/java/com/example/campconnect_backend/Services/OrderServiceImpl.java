@@ -92,8 +92,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderDto.Response> getAll(Pageable pageable) {
-        return orderRepository.findAllByDeletedFalse(pageable).map(this::toResponse);
+    public Page<OrderDto.Response> getAll(Long userId, Pageable pageable) {
+        Page<Order> orders = (userId == null)
+                ? orderRepository.findAllByDeletedFalse(pageable)
+                : orderRepository.findAllByUserIdAndDeletedFalse(userId, pageable);
+        return orders.map(this::toResponse);
     }
 
     @Override

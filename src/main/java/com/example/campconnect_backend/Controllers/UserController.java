@@ -21,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -55,9 +56,16 @@ public class UserController {
     // Any authenticated user: get their own profile
     @GetMapping("/me")
     public ResponseEntity<UserDto.Response> getMe(Authentication auth) {
+
+        System.out.println("AUTH = " + auth);
+
+        if (auth != null) {
+            System.out.println("PRINCIPAL CLASS = " + auth.getPrincipal().getClass());
+            System.out.println("PRINCIPAL = " + auth.getPrincipal());
+        }
+
         return ResponseEntity.ok(userService.findByEmail(getEmail(auth)));
     }
-
     // Any authenticated user: update their own profile
     @PutMapping("/me")
     public ResponseEntity<UserDto.Response> updateMe(@Valid @RequestBody UserDto.UpdateRequest request,

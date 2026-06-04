@@ -29,7 +29,9 @@ public class AuthController {
 
     // 🔐 LOGIN
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -37,43 +39,13 @@ public class AuthController {
                 )
         );
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-        String token = jwtService.generateToken(userDetails);
+        User user = userRepository
+                .findByEmail(request.getEmail())
+                .orElseThrow();
 
-        return ResponseEntity.ok(
-                AuthResponse.builder()
-                        .token(token)
-                        .email(userDetails.getUsername())
-                        .build()
-        );
-    }
+        UserDetails userDetails =
+                userDetailsService.loadUserByUsername(request.getEmail());
 
-    // REGISTER
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-
-        // check if email already exists
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already in use");
-        }
-
-        // create user
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-
-        //  encode password
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-        // set role (default USER)
-        user.setRole(request.getRole() != null ? request.getRole() : Role.USER);
-
-        userRepository.save(user);
-
-        // generate token directly after register
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(userDetails);
 
         return ResponseEntity.ok(
@@ -81,7 +53,44 @@ public class AuthController {
                         .token(token)
                         .email(user.getEmail())
                         .role(user.getRole().name())
+                        .message("Login successful")
+                        .build()
+        );
+    }
+
+    // REGISTER
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already in use");
+        }
+
+        User user = new User();
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        user.setRole(
+                request.getRole() != null
+                        ? request.getRole()
+                        : Role.USER
+        );
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(
+                AuthResponse.builder()
                         .message("User registered successfully")
+                        .email(user.getEmail())
+                        .role(user.getRole().name())
                         .build()
         );
     }

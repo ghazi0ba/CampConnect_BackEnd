@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 public interface OrderService {
     OrderDto.Response create(OrderDto.CreateRequest request);
     OrderDto.Response getById(Long id);
-    Page<OrderDto.Response> getAll(Pageable pageable);
+    Page<OrderDto.Response> getAll(Long userId, Pageable pageable);
     OrderDto.Response updateStatus(Long id, OrderStatus status);
     void delete(Long id); // soft delete
 }

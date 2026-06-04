@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -29,8 +30,10 @@ public class OrderController {
     }
 
     @GetMapping
-    public Page<OrderDto.Response> getAll(Pageable pageable) {
-        return orderService.getAll(pageable);
+    public Page<OrderDto.Response> getAll(
+            @RequestParam(required = false) Long userId,
+            Pageable pageable) {
+        return orderService.getAll(userId, pageable);
     }
 
     @PatchMapping("/{id}/status")
