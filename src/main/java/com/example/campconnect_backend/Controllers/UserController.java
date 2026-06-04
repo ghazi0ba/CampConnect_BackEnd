@@ -32,7 +32,7 @@ public class UserController {
 
     //ADMIN: create user
     @PostMapping
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto.Response> createUser(
             @Valid @RequestBody UserDto.CreateRequest request) {
         return ResponseEntity.ok(userService.create(request));
@@ -41,14 +41,14 @@ public class UserController {
 
     // Admin: get all users
     @GetMapping
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDto.Response>> getAll() {
         return ResponseEntity.ok(userService.findAll());
     }
 
     // Admin: get any user by ID
     @GetMapping("/{id}")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto.Response> getById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.findById(id));
     }
@@ -84,7 +84,7 @@ public class UserController {
 
     // Admin: update any user's role
     @PatchMapping("/{id}/role")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto.Response> updateRole(@PathVariable Long id,
                                                        @RequestParam String role) {
         return ResponseEntity.ok(userService.updateRole(id, role));
@@ -92,7 +92,7 @@ public class UserController {
 
     // Admin: delete any user
     @DeleteMapping("/{id}")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();

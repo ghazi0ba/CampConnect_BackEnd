@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
 
-                // ✅ FIX: ensures Angular receives proper 401 response
+
                 .exceptionHandling(ex ->
                         ex.authenticationEntryPoint(authenticationEntryPoint())
                 )
@@ -69,34 +69,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/users/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").permitAll()
+                        .requestMatchers("/api/users/me", "/api/users/me/**").authenticated()
+
 
                         .requestMatchers(HttpMethod.GET, "/api/equipments/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/equipments/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/equipments/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/equipments/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/equipments/**").permitAll()
+                        .requestMatchers("/api/equipments/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/orders/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").permitAll()
 
-                        .requestMatchers("/api/admin/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH,  "/api/orders/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/**").authenticated()
+
+
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
-
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -122,7 +111,7 @@ public class SecurityConfig {
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
 
-        // ✅ FIX: simpler + safer
+
         config.setAllowedHeaders(List.of("*"));
 
         config.setAllowCredentials(true);
@@ -134,7 +123,7 @@ public class SecurityConfig {
         return source;
     }
 
-    // Optional but OK for preflight stability
+
     @Bean
     public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
