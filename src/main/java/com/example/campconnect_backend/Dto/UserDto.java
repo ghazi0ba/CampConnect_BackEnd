@@ -1,24 +1,22 @@
 package com.example.campconnect_backend.Dto;
 
-
-
 import com.example.campconnect_backend.Entities.Role;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 public class UserDto {
 
-
     @Data
     public static class CreateRequest {
-
         private String firstName;
         private String lastName;
         private String email;
         private String password;
         private String phone;
         private Role role;
-
+        // Matching / messaging profile (optional)
+        private String username;
+        private String avatarUrl;
     }
 
     @Data
@@ -29,6 +27,9 @@ public class UserDto {
         private String email;
         private String phone;
         private Role role;
+        // Matching / messaging profile
+        private String username;
+        private String avatarUrl;
     }
 
     @Data
@@ -41,6 +42,9 @@ public class UserDto {
         @NotBlank
         private String email;
         private String phone;
+        // Optional profile updates
+        private String username;
+        private String avatarUrl;
     }
 
     @Data

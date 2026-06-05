@@ -1,5 +1,6 @@
 package com.example.campconnect_backend.Entities;
 
+import com.example.campconnect_backend.Entities.UserPreference.SkillLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -7,10 +8,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "group_match")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class GroupMatch {
 
     @Id
@@ -21,22 +19,25 @@ public class GroupMatch {
     private String name;
 
     private String description;
-
     private String sport;
 
+    // Niveau requis pour ce groupe
+    @Enumerated(EnumType.STRING)
+    private SkillLevel skillLevel;
+
     private int maxParticipants;
-
     private LocalDateTime scheduledAt;
-
     private String location;
+
+    // Coordonnées GPS du lieu
+    private Double latitude;
+    private Double longitude;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
+    public void prePersist() { this.createdAt = LocalDateTime.now(); }
 
     @OneToMany(mappedBy = "groupMatch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserParticipant> participants;

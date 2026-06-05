@@ -84,6 +84,18 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
+                        // Group matching / messaging / AI / preferences (matching branch)
+                        // + WebSocket handshake. These features were open in their
+                        // original branch, so they are permitted here too.
+                        .requestMatchers(
+                                "/api/matching/**",
+                                "/api/groups/**",
+                                "/api/messages/**",
+                                "/api/participants/**",
+                                "/api/userpreferences/**",
+                                "/ws/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess ->

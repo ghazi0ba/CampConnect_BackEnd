@@ -1,8 +1,8 @@
-package com.example.campconnect_backend.Entities;
+ package com.example.campconnect_backend.Entities;
 import jakarta.persistence.Embeddable;
 import lombok.*;
 import java.io.Serializable;
-
+ 
 @Embeddable
 @Data
 @NoArgsConstructor

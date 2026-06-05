@@ -41,6 +41,8 @@ public class UserService {
         user.setPassword(request.getPassword());
         user.setPhone(request.getPhone());
         user.setRole(request.getRole());
+        user.setUsername(request.getUsername());
+        user.setAvatarUrl(request.getAvatarUrl());
 
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -80,6 +82,8 @@ public class UserService {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
+        if (request.getUsername() != null) user.setUsername(request.getUsername());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
 
         return toResponse(userRepository.save(user));
     }
@@ -127,6 +131,8 @@ public class UserService {
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
         dto.setRole(user.getRole());
+        dto.setUsername(user.getUsername());
+        dto.setAvatarUrl(user.getAvatarUrl());
         return dto;
     }
 }
